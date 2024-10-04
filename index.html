@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Input and Save as PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 80%;
+      margin: 0 auto;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+
+    .invoice-box {
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    .total {
+      text-align: right;
+      font-size: 1.2em;
+    }
+
+    .item-header {
+      background-color: #f1f1f1;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.save-btn {
+      background-color: #007bff;
+      margin-top: 10px;
+    }
+
+    .save-btn-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Invoice Input Form</h1>
+    <form id="invoice-form">
+      <label for="invoice-number">Invoice Number</label>
+      <input type="text" id="invoice-number" required>
+
+      <label for="customer-name">Customer Name</label>
+      <input type="text" id="customer-name" required>
+
+      <label for="customer-address">Customer Address</label>
+      <textarea id="customer-address" rows="3" required></textarea>
+
+      <label for="date">Date</label>
+      <input type="date" id="date" required>
+
+      <h2>Items Sold</h2>
+      <table id="items-table">
+        <thead>
+          <tr class="item-header">
+            <th>Item Name</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" class="item-name" required></td>
+            <td><input type="number" class="item-qty" required></td>
+            <td><input type="number" class="item-price" required></td>
+            <td class="item-subtotal">0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button type="button" onclick="addItem()">Add Another Item</button>
+      <div class="total">
+        <strong>Total: $<span id="total-amount">0</span></strong>
+      </div>
+
+      <button type="submit">Generate Invoice</button>
+    </form>
+
+    <div class="invoice-box" id="invoice" style="display: none;">
+      <h2>Invoice</h2>
+      <p><strong>Invoice Number:</strong> <span id="invoice-no"></span></p>
+      <p><strong>Customer Name:</strong> <span id="cust-name"></span></p>
+      <p><strong>Customer Address:</strong> <span id="cust-address"></span></p>
+      <p><strong>Date:</strong> <span id="inv-date"></span></p>
+
+      <h3>Items Sold</h3>
+      <table id="invoice-items">
+        <thead>
+          <tr class="item-header">
+            <th>Item Name</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <p class="total"><strong>Total: $<span id="invoice-total">0</span></strong></p>
+
+      <div class="save-btn-container">
+        <button class="save-btn" onclick="saveAsPDF()">Save as PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function addItem() {
+      const table = document.getElementById('items-table').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      row.innerHTML = `
+                <td><input type="text" class="item-name" required></td>
+                <td><input type="number" class="item-qty" required></td>
+                <td><input type="number" class="item-price" required></td>
+                <td class="item-subtotal">0</td>
+            `;
+    }
+
+    function calculateTotal() {
+      const rows = document.querySelectorAll('#items-table tbody tr');
+      let total = 0;
+
+      rows.forEach(row => {
+        const qty = row.querySelector('.item-qty').value;
+        const price = row.querySelector('.item-price').value;
+        const subtotal = qty * price;
+        row.querySelector('.item-subtotal').textContent = subtotal || 0;
+        total += subtotal || 0;
+      });
+
+      document.getElementById('total-amount').textContent = total.toFixed(2);
+    }
+
+    document.getElementById('invoice-form').addEventListener('input', calculateTotal);
+
+    document.getElementById('invoice-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const invoiceNumber = document.getElementById('invoice-number').value;
+      const customerName = document.getElementById('customer-name').value;
+      const customerAddress = document.getElementById('customer-address').value;
+      const date = document.getElementById('date').value;
+      const totalAmount = document.getElementById('total-amount').textContent;
+
+      document.getElementById('invoice-no').textContent = invoiceNumber;
+      document.getElementById('cust-name').textContent = customerName;
+      document.getElementById('cust-address').textContent = customerAddress;
+      document.getElementById('inv-date').textContent = date;
+      document.getElementById('invoice-total').textContent = totalAmount;
+
+      const itemsTableBody = document.querySelector('#invoice-items tbody');
+      itemsTableBody.innerHTML = '';
+      const rows = document.querySelectorAll('#items-table tbody tr');
+
+      rows.forEach(row => {
+        const itemName = row.querySelector('.item-name').value;
+        const qty = row.querySelector('.item-qty').value;
+        const price = row.querySelector('.item-price').value;
+        const subtotal = row.querySelector('.item-subtotal').textContent;
+
+        const newRow = itemsTableBody.insertRow();
+        newRow.innerHTML = `<td>${itemName}</td><td>${qty}</td><td>${price}</td><td>${subtotal}</td>`;
+      });
+
+      document.getElementById('invoice').style.display = 'block';
+    });
+
+    function saveAsPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const invoiceNumber = document.getElementById('invoice-no').textContent;
+      const customerName = document.getElementById('cust-name').textContent;
+      const customerAddress = document.getElementById('cust-address').textContent;
+      const date = document.getElementById('inv-date').textContent;
+      const totalAmount = document.getElementById('invoice-total').textContent;
+
+      // Menambahkan header invoice
+      doc.text(`Invoice Number: ${invoiceNumber}`, 10, 10);
+      doc.text(`Customer Name: ${customerName}`, 10, 20);
+      doc.text(`Customer Address: ${customerAddress}`, 10, 30);
+      doc.text(`Date: ${date}`, 10, 40);
+
+      // Menggambar tabel items
+      const items = document.querySelectorAll('#invoice-items tbody tr');
+      const startY = 50; // Posisi Y awal untuk tabel
+      const rowHeight = 10; // Tinggi setiap baris
+      const columnWidths = [80, 20, 30, 30]; // Lebar kolom (dalam mm)
+
+      // Menggambar header tabel
+      doc.setFontSize(10);
+      doc.setFont("bold");
+      doc.text("Item Name", 10, startY);
+      doc.text("Quantity", 90, startY);
+      doc.text("Unit Price", 110, startY);
+      doc.text("Subtotal", 140, startY);
+      doc.setFont("normal");
+
+      // Menggambar garis bawah header
+      doc.line(10, startY + 1, 200, startY + 1);
+
+      let y = startY + rowHeight;
+
+      // Menggambar setiap item di tabel
+      items.forEach(item => {
+        const itemName = item.cells[0].textContent;
+        const qty = item.cells[1].textContent;
+        const price = item.cells[2].textContent;
+        const subtotal = item.cells[3].textContent;
+
+        doc.text(itemName, 10, y);
+        doc.text(qty, 90, y);
+        doc.text(price, 110, y);
+        doc.text(subtotal, 140, y);
+        y += rowHeight; // Pindah ke baris berikutnya
+      });
+
+      // Menambahkan total
+      y += 10; // Spasi sebelum total
+      doc.setFont("bold");
+      doc.text(`Total: $${totalAmount}`, 10, y);
+      doc.setFont("normal");
+
+      // Menyimpan PDF
+      doc.save(`invoice_${invoiceNumber}.pdf`);
+    }
+
+
+  </script>
+</body>
+
+</html>

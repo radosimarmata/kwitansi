@@ -12,8 +12,8 @@
 <body class="bg-gray-100">
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold text-center mb-6">Invoice</h1>
-    <form id="invoice-form" class="bg-white p-6 rounded-lg shadow-md">
-      <label for="invoice-number" class="block font-medium">Invoice Number</label>
+    <form id="invoice-form" class="bg-white p-6 rounded-lg shadow-md text-sm">
+      <label for="invoice-number" class="block font-medium">Invoice No</label>
       <input type="text" id="invoice-number" class="w-full p-2 border rounded-md mt-1" required>
 
       <label for="customer-name" class="block font-medium mt-4">Customer Name</label>
@@ -22,10 +22,19 @@
       <label for="customer-address" class="block font-medium mt-4">Customer Address</label>
       <textarea id="customer-address" rows="3" class="w-full p-2 border rounded-md mt-1" required></textarea>
 
-      <label for="date" class="block font-medium mt-4">Date</label>
-      <input type="date" id="date" class="w-full p-2 border rounded-md mt-1" required>
+      <div class="flex flex-wrap">
+        <div class="w-1/2">
+          <label for="date" class="block font-medium mt-4">Invoice Date</label>
+          <input type="date" id="date" class="p-2 border rounded-md mt-1" required>
+        </div>
+        <div class="w-1/2">
+          <label for="duedate" class="block font-medium mt-4">Due Date</label>
+          <input type="date" id="duedate" class="p-2 border rounded-md mt-1" required>
+        </div>
+  
+      </div>
 
-      <h2 class="text-xl font-semibold mt-6 mb-2 text-center">Items Sold</h2>
+      <h2 class="text-xl font-semibold mt-6 mb-2 text-center">Items</h2>
       <table id="items-table" class="w-full border border-gray-300 table-auto">
         <thead>
           <tr class="bg-gray-200">
@@ -50,10 +59,11 @@
 
     <div class="bg-white p-6 mt-8 rounded-lg shadow-md" id="invoice" style="display: none;">
       <h2 class="text-2xl font-bold text-center">Invoice</h2>
-      <p><strong>Invoice Number:</strong> <span id="invoice-no"></span></p>
+      <p><strong>Invoice No:</strong> <span id="invoice-no"></span></p>
       <p><strong>Customer Name:</strong> <span id="cust-name"></span></p>
       <p><strong>Customer Address:</strong> <span id="cust-address"></span></p>
-      <p><strong>Date:</strong> <span id="inv-date"></span></p>
+      <p><strong>Invoice Date:</strong> <span id="inv-date"></span></p>
+      <p><strong>Due Date:</strong> <span id="due-date"></span></p>
 
       <h3 class="text-xl font-semibold mt-4">Items Sold</h3>
       <table id="invoice-items" class="w-full border border-gray-300 table-auto">
@@ -80,9 +90,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const dateInput = document.getElementById('date');
       const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('date');
+      const duedateInput = document.getElementById('duedate');
       dateInput.value = today;
+      duedateInput.value = today;
     });
     function addItem() {
       const table = document.getElementById('items-table').getElementsByTagName('tbody')[0];
@@ -119,12 +131,14 @@
       const customerName = document.getElementById('customer-name').value;
       const customerAddress = document.getElementById('customer-address').value;
       const date = document.getElementById('date').value;
+      const duedate = document.getElementById('duedate').value;
       const totalAmount = document.getElementById('total-amount').textContent;
   
       document.getElementById('invoice-no').textContent = invoiceNumber;
       document.getElementById('cust-name').textContent = customerName;
       document.getElementById('cust-address').textContent = customerAddress;
       document.getElementById('inv-date').textContent = date;
+      document.getElementById('due-date').textContent = duedate;
       document.getElementById('invoice-total').textContent = totalAmount;
   
       const itemsTableBody = document.querySelector('#invoice-items tbody');
@@ -152,13 +166,15 @@
       const customerName = document.getElementById('cust-name').textContent;
       const customerAddress = document.getElementById('cust-address').textContent;
       const date = document.getElementById('inv-date').textContent;
+      const duedate = document.getElementById('due-date').textContent;
       const totalAmount = document.getElementById('invoice-total').textContent;
 
       // Menambahkan header invoice
       doc.text(`Invoice Number: ${invoiceNumber}`, 10, 10);
       doc.text(`Customer Name: ${customerName}`, 10, 20);
       doc.text(`Customer Address: ${customerAddress}`, 10, 30);
-      doc.text(`Date: ${date}`, 10, 40);
+      doc.text(`Invoice Date: ${date}`, 10, 40);
+      doc.text(`Due Date: ${duedate}`, 10, 40);
 
       // Menggambar tabel items
       const items = document.querySelectorAll('#invoice-items tbody tr');
@@ -167,16 +183,16 @@
       const columnWidths = [80, 20, 30, 30]; // Lebar kolom (dalam mm)
 
       // Menggambar header tabel
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont("bold");
-      doc.text("Item Name", 10, startY);
+      doc.text("Item Name", 11, startY);
       doc.text("Quantity", 90, startY);
       doc.text("Unit Price", 110, startY);
       doc.text("Subtotal", 140, startY);
       doc.setFont("normal");
 
       // Menggambar garis bawah header
-      doc.line(10, startY + 1, 200, startY + 1);
+      doc.line(11, startY + 1, 200, startY + 1);
 
       let y = startY + rowHeight;
 
@@ -197,7 +213,7 @@
       // Menambahkan total
       y += 10; // Spasi sebelum total
       doc.setFont("bold");
-      doc.text(`Total: $${totalAmount}`, 10, y);
+      doc.text(`Total: Rp ${totalAmount}`, 10, y);
       doc.setFont("normal");
 
       // Menyimpan PDF
